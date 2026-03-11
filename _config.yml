@@ -17,8 +17,9 @@ minimal_mistakes_skin    : "default" # "air", "aqua", "contrast", "dark", "dirt"
 # Site Settings
 locale                   : "en-US"
 rtl                      : # true, false (default) # turns direction of the page into right to left for RTL languages
-title                    : "Site Title"
+title                    : "Karu's mom"
 title_separator          : "-"
+date_format              : "%Y-%m-%d"
 subtitle                 : # site tagline that appears below site title in masthead
 name                     : "Your Name"
 description              : "An amazing website."
@@ -113,10 +114,10 @@ analytics:
 
 # Site Author
 author:
-  name             : "Your Name"
+  name             : "Karu Kim"
   avatar           : # path of avatar image, e.g. "/assets/images/bio-photo.jpg"
-  bio              : "I am an **amazing** person."
-  location         : "Somewhere"
+  bio              : "A designer backed by the power of a developer."
+  location         : "Yongsan, Seoul"
   email            :
   links:
     - label: "Email"
@@ -321,7 +322,8 @@ defaults:
     values:
       layout: single
       author_profile: true
-      read_time: true
+      read_time: false
+      show_date: true
       comments: # true
       share: true
       related: true

@@ -1,0 +1,361 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>After - 음식 주문 앱</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: #f8f8f8;
+      color: #333;
+    }
+    html, body { overflow: -moz-scrollbars-none; -ms-overflow-style: none; scrollbar-width: none; }
+    ::-webkit-scrollbar { display: none; }
+    .status-bar {
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 8px 16px; font-size: 12px; font-weight: 600; background: #fff;
+      position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+    }
+    body { padding-top: 28px; }
+
+    /* 개선1: 컴팩트한 헤더 + 인사말로 친근감 */
+    .header {
+      background: #fff;
+      padding: 16px;
+    }
+    .header .greeting { font-size: 13px; color: #999; }
+    .header .title { font-size: 20px; font-weight: 700; margin-top: 4px; }
+
+    /* 개선2: 카테고리 터치 영역 확대 + 아이콘 추가 */
+    .category-bar {
+      display: flex;
+      gap: 8px;
+      padding: 12px 16px;
+      overflow-x: auto;
+      background: #fff;
+    }
+    .cat-btn {
+      padding: 8px 14px;
+      font-size: 13px;
+      border: none;
+      border-radius: 20px;
+      background: #f0f0f0;
+      white-space: nowrap;
+      cursor: pointer;
+      color: #666;
+      transition: all 0.2s;
+    }
+    .cat-btn.active { background: #FF6B35; color: #fff; font-weight: 600; }
+
+    /* 개선3: 카드형 레이아웃 + 그림자 + 둥근 모서리 */
+    .menu-list { padding: 8px 16px; padding-bottom: 80px; }
+    .menu-card {
+      background: #fff;
+      border-radius: 14px;
+      padding: 14px;
+      margin-bottom: 12px;
+      display: flex;
+      gap: 14px;
+      align-items: center;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+      cursor: pointer;
+      transition: transform 0.15s;
+    }
+    .menu-card:active { transform: scale(0.98); }
+    .menu-thumb {
+      width: 72px;
+      height: 72px;
+      background: #FFF3ED;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 32px;
+      flex-shrink: 0;
+    }
+    .menu-info { flex: 1; }
+    /* 개선4: 명확한 타이포 위계 */
+    .menu-info h3 { font-size: 15px; font-weight: 600; color: #222; }
+    .menu-info .desc { font-size: 12px; color: #aaa; margin-top: 3px; }
+    .menu-info .price-row {
+      display: flex; justify-content: space-between; align-items: center; margin-top: 8px;
+    }
+    .menu-info .price { font-size: 16px; font-weight: 700; color: #FF6B35; }
+    /* 개선5: 눈에 띄는 CTA 버튼 */
+    .menu-info .order-btn {
+      padding: 6px 14px;
+      font-size: 12px;
+      font-weight: 600;
+      background: #FF6B35;
+      color: #fff;
+      border: none;
+      border-radius: 18px;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    .menu-info .order-btn:active { background: #e55a28; }
+
+    /* 개선6: 눈에 띄는 플로팅 장바구니 + 뱃지 */
+    .cart-float {
+      position: fixed;
+      bottom: 68px;
+      right: 16px;
+      width: 52px;
+      height: 52px;
+      background: #FF6B35;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 22px;
+      color: #fff;
+      cursor: pointer;
+      box-shadow: 0 4px 16px rgba(255,107,53,0.4);
+      transition: transform 0.2s;
+    }
+    .cart-float:active { transform: scale(0.9); }
+    .cart-badge {
+      position: absolute;
+      top: -2px;
+      right: -2px;
+      width: 20px;
+      height: 20px;
+      background: #FF3B30;
+      color: #fff;
+      border-radius: 50%;
+      font-size: 11px;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .bottom-nav {
+      position: fixed; bottom: 0; left: 0; right: 0;
+      background: #fff; display: flex; justify-content: space-around;
+      padding: 10px 0; border-top: 1px solid #eee;
+      font-size: 11px; color: #bbb;
+    }
+    .nav-item { text-align: center; cursor: pointer; transition: color 0.2s; }
+    .nav-item.active { color: #FF6B35; }
+    .nav-item .nav-icon { font-size: 20px; margin-bottom: 2px; }
+
+    .page { display: none; }
+    .page.active { display: block; }
+
+    /* 개선: 상세 페이지 */
+    .detail-header {
+      background: #fff; color: #333; padding: 16px;
+      display: flex; align-items: center; font-size: 17px; font-weight: 600;
+      border-bottom: 1px solid #f0f0f0;
+    }
+    .back-btn {
+      background: none; border: none; color: #333;
+      font-size: 24px; margin-right: 12px; cursor: pointer;
+    }
+    .detail-body { padding: 0; }
+    .detail-body .big-thumb {
+      width: 100%; height: 200px; background: #FFF3ED;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 64px;
+    }
+    .detail-content { padding: 20px 16px; }
+    .detail-content h2 { font-size: 20px; font-weight: 700; }
+    .detail-content .price-big { font-size: 22px; color: #FF6B35; font-weight: 700; margin-top: 6px; }
+    .detail-content .desc-big { font-size: 14px; color: #888; margin-top: 12px; line-height: 1.6; }
+    .detail-content .tags { margin-top: 12px; display: flex; gap: 6px; }
+    .detail-content .tag {
+      padding: 4px 10px; background: #f0f0f0; border-radius: 12px;
+      font-size: 12px; color: #888;
+    }
+    .detail-content .add-btn {
+      margin-top: 20px; width: 100%; padding: 14px;
+      background: #FF6B35; color: #fff; border: none;
+      font-size: 16px; font-weight: 600;
+      border-radius: 12px; cursor: pointer;
+      transition: background 0.2s;
+    }
+    .detail-content .add-btn:active { background: #e55a28; }
+
+    /* 담기 애니메이션 */
+    .toast {
+      display: none;
+      position: fixed;
+      bottom: 120px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(0,0,0,0.8);
+      color: #fff;
+      padding: 10px 20px;
+      border-radius: 20px;
+      font-size: 13px;
+      z-index: 100;
+      animation: fadeInOut 1.5s ease;
+    }
+    .toast.show { display: block; }
+    @keyframes fadeInOut {
+      0% { opacity: 0; transform: translateX(-50%) translateY(10px); }
+      20% { opacity: 1; transform: translateX(-50%) translateY(0); }
+      80% { opacity: 1; }
+      100% { opacity: 0; }
+    }
+  </style>
+</head>
+<body>
+  <div class="status-bar"><span>9:41</span><span>📶 🔋</span></div>
+
+  <!-- 메인 페이지 -->
+  <div class="page active" id="page-main">
+    <div class="header">
+      <div class="greeting">안녕하세요, Karu 님 👋</div>
+      <div class="title">오늘 뭐 먹을까요?</div>
+    </div>
+    <div class="category-bar">
+      <div class="cat-btn active" onclick="selectCat(this)">🍽️ 전체</div>
+      <div class="cat-btn" onclick="selectCat(this)">🍚 한식</div>
+      <div class="cat-btn" onclick="selectCat(this)">🥟 중식</div>
+      <div class="cat-btn" onclick="selectCat(this)">🍱 일식</div>
+      <div class="cat-btn" onclick="selectCat(this)">🍝 양식</div>
+      <div class="cat-btn" onclick="selectCat(this)">🌶️ 분식</div>
+      <div class="cat-btn" onclick="selectCat(this)">🍰 디저트</div>
+    </div>
+
+    <div class="menu-list">
+      <div class="menu-card" onclick="openItem('bibimbap')">
+        <div class="menu-thumb">🍚</div>
+        <div class="menu-info">
+          <h3>비빔밥</h3>
+          <div class="desc">야채와 고추장이 어우러진 비빔밥</div>
+          <div class="price-row">
+            <span class="price">8,000원</span>
+            <button class="order-btn" onclick="event.stopPropagation(); addToCart()">+ 담기</button>
+          </div>
+        </div>
+      </div>
+      <div class="menu-card" onclick="openItem('jjigae')">
+        <div class="menu-thumb">🍲</div>
+        <div class="menu-info">
+          <h3>김치찌개</h3>
+          <div class="desc">깊은 맛의 김치찌개</div>
+          <div class="price-row">
+            <span class="price">7,000원</span>
+            <button class="order-btn" onclick="event.stopPropagation(); addToCart()">+ 담기</button>
+          </div>
+        </div>
+      </div>
+      <div class="menu-card" onclick="openItem('tonkatsu')">
+        <div class="menu-thumb">🍱</div>
+        <div class="menu-info">
+          <h3>돈까스</h3>
+          <div class="desc">바삭한 수제 돈까스</div>
+          <div class="price-row">
+            <span class="price">9,000원</span>
+            <button class="order-btn" onclick="event.stopPropagation(); addToCart()">+ 담기</button>
+          </div>
+        </div>
+      </div>
+      <div class="menu-card" onclick="openItem('pasta')">
+        <div class="menu-thumb">🍝</div>
+        <div class="menu-info">
+          <h3>크림파스타</h3>
+          <div class="desc">부드러운 크림소스 파스타</div>
+          <div class="price-row">
+            <span class="price">11,000원</span>
+            <button class="order-btn" onclick="event.stopPropagation(); addToCart()">+ 담기</button>
+          </div>
+        </div>
+      </div>
+      <div class="menu-card" onclick="openItem('tteokbokki')">
+        <div class="menu-thumb">🌶️</div>
+        <div class="menu-info">
+          <h3>떡볶이</h3>
+          <div class="desc">매콤달콤 국물 떡볶이</div>
+          <div class="price-row">
+            <span class="price">5,000원</span>
+            <button class="order-btn" onclick="event.stopPropagation(); addToCart()">+ 담기</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="cart-float" onclick="openItem('bibimbap')">
+      🛒
+      <div class="cart-badge" id="cart-badge">0</div>
+    </div>
+  </div>
+
+  <!-- 상세 페이지 -->
+  <div class="page" id="page-detail">
+    <div class="detail-header">
+      <button class="back-btn" onclick="goBack()">‹</button>
+      <span id="detail-title">메뉴 상세</span>
+    </div>
+    <div class="detail-body">
+      <div class="big-thumb" id="detail-icon"></div>
+      <div class="detail-content">
+        <h2 id="detail-name"></h2>
+        <div class="price-big" id="detail-price"></div>
+        <div class="tags" id="detail-tags"></div>
+        <div class="desc-big" id="detail-desc"></div>
+        <button class="add-btn" onclick="addToCart(); goBack();">장바구니에 담기</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 토스트 메시지 -->
+  <div class="toast" id="toast">✅ 장바구니에 담았어요!</div>
+
+  <div class="bottom-nav">
+    <div class="nav-item active"><div class="nav-icon">🏠</div>홈</div>
+    <div class="nav-item"><div class="nav-icon">🔍</div>검색</div>
+    <div class="nav-item"><div class="nav-icon">🛒</div>장바구니</div>
+    <div class="nav-item"><div class="nav-icon">👤</div>마이</div>
+  </div>
+
+  <script>
+    let cartCount = 0;
+    const items = {
+      bibimbap: { icon: '🍚', name: '비빔밥', price: '8,000원', tags: ['한식', '건강식', '인기'], desc: '신선한 야채와 매콤한 고추장이 어우러진 전통 비빔밥입니다. 달걀 프라이와 참기름으로 고소한 맛을 더했습니다.' },
+      jjigae: { icon: '🍲', name: '김치찌개', price: '7,000원', tags: ['한식', '국물', '매콤'], desc: '잘 익은 김치로 끓인 깊은 맛의 김치찌개입니다. 돼지고기와 두부가 들어 있습니다.' },
+      tonkatsu: { icon: '🍱', name: '돈까스', price: '9,000원', tags: ['일식', '튀김', '인기'], desc: '두툼한 등심을 바삭하게 튀긴 수제 돈까스입니다. 특제 소스와 함께 제공됩니다.' },
+      pasta: { icon: '🍝', name: '크림파스타', price: '11,000원', tags: ['양식', '크림', '파스타'], desc: '진한 크림소스에 베이컨과 버섯을 넣은 부드러운 파스타입니다.' },
+      tteokbokki: { icon: '🌶️', name: '떡볶이', price: '5,000원', tags: ['분식', '매콤', '간식'], desc: '쫄깃한 떡과 어묵이 들어간 매콤달콤한 국물 떡볶이입니다.' }
+    };
+
+    function openItem(key) {
+      const item = items[key];
+      document.getElementById('detail-icon').textContent = item.icon;
+      document.getElementById('detail-name').textContent = item.name;
+      document.getElementById('detail-price').textContent = item.price;
+      document.getElementById('detail-desc').textContent = item.desc;
+      document.getElementById('detail-title').textContent = item.name;
+      const tagsEl = document.getElementById('detail-tags');
+      tagsEl.innerHTML = item.tags.map(t => '<span class="tag">' + t + '</span>').join('');
+      document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+      document.getElementById('page-detail').classList.add('active');
+    }
+
+    function goBack() {
+      document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+      document.getElementById('page-main').classList.add('active');
+    }
+
+    function selectCat(el) {
+      document.querySelectorAll('.cat-btn').forEach(b => b.classList.remove('active'));
+      el.classList.add('active');
+    }
+
+    function addToCart() {
+      cartCount++;
+      document.getElementById('cart-badge').textContent = cartCount;
+      const toast = document.getElementById('toast');
+      toast.classList.remove('show');
+      void toast.offsetWidth;
+      toast.classList.add('show');
+      setTimeout(() => toast.classList.remove('show'), 1500);
+    }
+  </script>
+</body>
+</html>
